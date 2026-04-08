@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ClientProfile {
+  id            String    @id @default(cuid())
+  name          String
+  systems       String[]
+  integrations  String[]
+  dataPlatforms String[]
+  channels      String[]
+  cloudEnv      String
+  dataQuality   String
+  constraints   String[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  useCases      UseCase[]
+}
+
+model UseCase {
+  id                 String    @id @default(cuid())
+  title              String
+  description        String
+  businessObjective  String
+  businessUnit       String
+  domain             String
+  workspace          String
+  owner              String
+  category           String?
+
+  scoreValue         Int?
+  scoreFeasibility   Int?
+  scoreData          Int?
+  scoreSpeed         Int?
+  scoreRisk          Int?
+  totalScore         Float?
+  recommendation     String?
+
+  aiScoreValue       Int?
+  aiScoreFeasibility Int?
+  aiScoreData        Int?
+  aiScoreSpeed       Int?
+  aiScoreRisk        Int?
+
+  aiSummary          String?
+  businessProblem    String?
+  reasoning          String?
+
+  status             String    @default("DRAFT")
+  createdBy          String
+  reviewedBy         String?
+  approvedBy         String?
+
+  clientProfileId    String
+  clientProfile      ClientProfile @relation(fields: [clientProfileId], references: [id])
+  comments           Comment[]
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  reviewedAt         DateTime?
+  approvedAt         DateTime?
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  author    String
+  role      String
+  useCaseId String
+  useCase   UseCase  @relation(fields: [useCaseId], references: [id])
+  createdAt DateTime @default(now())
+}

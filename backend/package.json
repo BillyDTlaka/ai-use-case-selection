@@ -1,0 +1,22 @@
+{
+  "name": "ai-use-case-selection-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "build": "echo 'No build needed'",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@fastify/cors": "^9.0.1",
+    "@prisma/client": "^5.22.0",
+    "fastify": "^4.28.1"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  }
+}

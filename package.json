@@ -1,0 +1,12 @@
+{
+  "name": "ai-use-case-selection",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "db:migrate": "cd backend && npm run db:migrate",
+    "db:generate": "cd backend && npm run db:generate"
+  }
+}
