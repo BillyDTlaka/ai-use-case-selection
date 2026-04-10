@@ -1,0 +1,60 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "triggers": {
+      "manual": {
+        "type": "Request",
+        "kind": "PowerAppsV2",
+        "inputs": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "text":   { "title": "useCaseId",  "type": "string" },
+              "text_1": { "title": "rejectedBy", "type": "string" }
+            },
+            "required": ["text", "text_1"]
+          }
+        }
+      }
+    },
+    "actions": {
+      "Update_UseCase_Rejected": {
+        "type": "OpenApiConnection",
+        "inputs": {
+          "host": {
+            "connectionName": "shared_commondataserviceforapps",
+            "operationId": "UpdateRecord",
+            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+          },
+          "parameters": {
+            "entityName": "ai_usecases",
+            "recordId": "@triggerBody()['text']",
+            "item/ai_status": "REJECTED",
+            "item/ai_approvedby": "@triggerBody()['text_1']",
+            "item/ai_approvedat": "@utcNow()"
+          }
+        },
+        "runAfter": {}
+      },
+      "Respond_to_PowerApps": {
+        "type": "Response",
+        "kind": "PowerApps",
+        "inputs": {
+          "statusCode": 200,
+          "body": { "result": "rejected" }
+        },
+        "runAfter": {
+          "Update_UseCase_Rejected": ["Succeeded"]
+        }
+      }
+    }
+  },
+  "connectionReferences": {
+    "shared_commondataserviceforapps": {
+      "runtimeSource": "embedded",
+      "connection": {},
+      "api": { "name": "shared_commondataserviceforapps" }
+    }
+  }
+}

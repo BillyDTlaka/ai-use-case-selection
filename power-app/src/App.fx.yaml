@@ -1,0 +1,15 @@
+- App As appinfo:
+    OnStart: |-
+        =Set(gblCurrentUser, {name: User().FullName, email: User().Email});
+        Set(gblCurrentRole, "Creator");
+        Set(gblActiveClientId, "");
+        Set(gblActiveClientName, "");
+        Set(gblAnalyzing, false);
+        Set(gblSubmitting, false);
+        ClearCollect(
+            colRoles,
+            {Value: "Creator"},
+            {Value: "Reviewer"},
+            {Value: "Approver"}
+        )
+    StartScreen: =scrDashboard

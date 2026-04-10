@@ -1,0 +1,178 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "triggers": {
+      "manual": {
+        "type": "Request",
+        "kind": "PowerAppsV2",
+        "inputs": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "title": "useCaseId",
+                "type": "string",
+                "x-ms-dynamically-added": true,
+                "description": "The Dataverse row ID of the UseCase to analyse"
+              }
+            },
+            "required": ["text"]
+          }
+        }
+      }
+    },
+    "actions": {
+      "Get_UseCase_Row": {
+        "type": "OpenApiConnection",
+        "inputs": {
+          "host": {
+            "connectionName": "shared_commondataserviceforapps",
+            "operationId": "GetItem",
+            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+          },
+          "parameters": {
+            "entityName": "ai_usecases",
+            "recordId": "@triggerBody()['text']"
+          }
+        },
+        "runAfter": {}
+      },
+      "Get_ClientProfile_Row": {
+        "type": "OpenApiConnection",
+        "inputs": {
+          "host": {
+            "connectionName": "shared_commondataserviceforapps",
+            "operationId": "GetItem",
+            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+          },
+          "parameters": {
+            "entityName": "ai_clientprofiles",
+            "recordId": "@body('Get_UseCase_Row')?['_ai_clientprofileid_value']"
+          }
+        },
+        "runAfter": {
+          "Get_UseCase_Row": ["Succeeded"]
+        }
+      },
+      "Run_AI_Builder_Prompt": {
+        "type": "OpenApiConnection",
+        "inputs": {
+          "host": {
+            "connectionName": "shared_aibuilder",
+            "operationId": "CreateTextWithGPT",
+            "apiId": "/providers/Microsoft.PowerApps/apis/shared_aibuilder"
+          },
+          "parameters": {
+            "body/prompt": "You are an AI enterprise architect and strategy advisor.\n\nClient architecture:\n- Name: @{body('Get_ClientProfile_Row')?['ai_name']}\n- Core Systems: @{body('Get_ClientProfile_Row')?['ai_systems']}\n- Integration Layer: @{body('Get_ClientProfile_Row')?['ai_integrations']}\n- Data Platforms: @{body('Get_ClientProfile_Row')?['ai_dataplatforms']}\n- Channels: @{body('Get_ClientProfile_Row')?['ai_channels']}\n- Cloud Environment: @{body('Get_ClientProfile_Row')?['ai_cloudenv']}\n- Data Quality: @{body('Get_ClientProfile_Row')?['ai_dataquality']}\n- Constraints: @{body('Get_ClientProfile_Row')?['ai_constraints']}\n\nUse case:\n- Title: @{body('Get_UseCase_Row')?['ai_title']}\n- Description: @{body('Get_UseCase_Row')?['ai_description']}\n- Business Objective: @{body('Get_UseCase_Row')?['ai_businessobjective']}\n- Business Unit: @{body('Get_UseCase_Row')?['ai_businessunit']}\n- Domain: @{body('Get_UseCase_Row')?['ai_domain']}\n\nAssess realistically based on integration complexity, data availability, and legacy constraints.\n\nReturn ONLY valid JSON in this exact structure:\n{\n  \"summary\": \"max 3 lines\",\n  \"businessProblem\": \"the core business problem being solved\",\n  \"category\": \"one of: Fraud, Claims, CX, Operations, Underwriting, Finance, HR, Other\",\n  \"scoreValue\": 1-5,\n  \"scoreFeasibility\": 1-5,\n  \"scoreData\": 1-5,\n  \"scoreSpeed\": 1-5,\n  \"scoreRisk\": 1-5,\n  \"reasoning\": \"2-3 sentences explaining the assessment\"\n}\n\nScore guidance:\n- scoreValue: 1=low business impact, 5=transformational\n- scoreFeasibility: 1=very complex or blocked, 5=straightforward with existing stack\n- scoreData: 1=data unavailable or poor quality, 5=data ready and high quality\n- scoreSpeed: 1=18+ months to deliver, 5=under 3 months\n- scoreRisk: 1=low risk, 5=high risk (this PENALISES the total score)"
+          }
+        },
+        "runAfter": {
+          "Get_ClientProfile_Row": ["Succeeded"]
+        }
+      },
+      "Parse_AI_Response": {
+        "type": "ParseJson",
+        "inputs": {
+          "content": "@body('Run_AI_Builder_Prompt')?['text']",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "summary": { "type": "string" },
+              "businessProblem": { "type": "string" },
+              "category": { "type": "string" },
+              "scoreValue": { "type": "integer" },
+              "scoreFeasibility": { "type": "integer" },
+              "scoreData": { "type": "integer" },
+              "scoreSpeed": { "type": "integer" },
+              "scoreRisk": { "type": "integer" },
+              "reasoning": { "type": "string" }
+            }
+          }
+        },
+        "runAfter": {
+          "Run_AI_Builder_Prompt": ["Succeeded"]
+        }
+      },
+      "Calculate_Total_Score": {
+        "type": "Compose",
+        "inputs": "@add(add(add(add(mul(body('Parse_AI_Response')?['scoreValue'], 2), body('Parse_AI_Response')?['scoreFeasibility']), body('Parse_AI_Response')?['scoreData']), body('Parse_AI_Response')?['scoreSpeed']), mul(body('Parse_AI_Response')?['scoreRisk'], -1))",
+        "runAfter": {
+          "Parse_AI_Response": ["Succeeded"]
+        }
+      },
+      "Set_Recommendation": {
+        "type": "Compose",
+        "inputs": "@if(greaterOrEquals(outputs('Calculate_Total_Score'), 18), 'QUICK_WIN', if(greaterOrEquals(outputs('Calculate_Total_Score'), 12), 'STRATEGIC', 'AVOID'))",
+        "runAfter": {
+          "Calculate_Total_Score": ["Succeeded"]
+        }
+      },
+      "Update_UseCase_Row": {
+        "type": "OpenApiConnection",
+        "inputs": {
+          "host": {
+            "connectionName": "shared_commondataserviceforapps",
+            "operationId": "UpdateRecord",
+            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+          },
+          "parameters": {
+            "entityName": "ai_usecases",
+            "recordId": "@triggerBody()['text']",
+            "item/ai_aisummary": "@body('Parse_AI_Response')?['summary']",
+            "item/ai_businessproblem": "@body('Parse_AI_Response')?['businessProblem']",
+            "item/ai_category": "@body('Parse_AI_Response')?['category']",
+            "item/ai_reasoning": "@body('Parse_AI_Response')?['reasoning']",
+            "item/ai_aiscorevalue": "@body('Parse_AI_Response')?['scoreValue']",
+            "item/ai_aiscorefeasi": "@body('Parse_AI_Response')?['scoreFeasibility']",
+            "item/ai_aiscoredata": "@body('Parse_AI_Response')?['scoreData']",
+            "item/ai_aiscorspeed": "@body('Parse_AI_Response')?['scoreSpeed']",
+            "item/ai_aiscorisk": "@body('Parse_AI_Response')?['scoreRisk']",
+            "item/ai_scorevalue": "@body('Parse_AI_Response')?['scoreValue']",
+            "item/ai_scorefeasibility": "@body('Parse_AI_Response')?['scoreFeasibility']",
+            "item/ai_scoredata": "@body('Parse_AI_Response')?['scoreData']",
+            "item/ai_scorespeed": "@body('Parse_AI_Response')?['scoreSpeed']",
+            "item/ai_scorerisk": "@body('Parse_AI_Response')?['scoreRisk']",
+            "item/ai_totalscore": "@outputs('Calculate_Total_Score')",
+            "item/ai_recommendation": "@outputs('Set_Recommendation')"
+          }
+        },
+        "runAfter": {
+          "Set_Recommendation": ["Succeeded"]
+        }
+      },
+      "Respond_to_PowerApps": {
+        "type": "Response",
+        "kind": "PowerApps",
+        "inputs": {
+          "statusCode": 200,
+          "body": {
+            "useCaseId": "@triggerBody()['text']",
+            "totalScore": "@outputs('Calculate_Total_Score')",
+            "recommendation": "@outputs('Set_Recommendation')"
+          }
+        },
+        "runAfter": {
+          "Update_UseCase_Row": ["Succeeded"]
+        }
+      }
+    }
+  },
+  "connectionReferences": {
+    "shared_commondataserviceforapps": {
+      "runtimeSource": "embedded",
+      "connection": {},
+      "api": {
+        "name": "shared_commondataserviceforapps"
+      }
+    },
+    "shared_aibuilder": {
+      "runtimeSource": "embedded",
+      "connection": {},
+      "api": {
+        "name": "shared_aibuilder"
+      }
+    }
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "triggers": {
+      "manual": {
+        "type": "Request",
+        "kind": "PowerAppsV2",
+        "inputs": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "text":   { "title": "useCaseId",   "type": "string" },
+              "text_1": { "title": "reviewedBy",  "type": "string" },
+              "number":   { "title": "scoreValue",  "type": "number" },
+              "number_1": { "title": "scoreFeasibility", "type": "number" },
+              "number_2": { "title": "scoreData",   "type": "number" },
+              "number_3": { "title": "scoreSpeed",  "type": "number" },
+              "number_4": { "title": "scoreRisk",   "type": "number" }
+            },
+            "required": ["text"]
+          }
+        }
+      }
+    },
+    "actions": {
+      "Calculate_Total_Score": {
+        "type": "Compose",
+        "inputs": "@add(add(add(add(mul(triggerBody()['number'], 2), triggerBody()['number_1']), triggerBody()['number_2']), triggerBody()['number_3']), mul(triggerBody()['number_4'], -1))",
+        "runAfter": {}
+      },
+      "Set_Recommendation": {
+        "type": "Compose",
+        "inputs": "@if(greaterOrEquals(outputs('Calculate_Total_Score'), 18), 'QUICK_WIN', if(greaterOrEquals(outputs('Calculate_Total_Score'), 12), 'STRATEGIC', 'AVOID'))",
+        "runAfter": {
+          "Calculate_Total_Score": ["Succeeded"]
+        }
+      },
+      "Update_UseCase": {
+        "type": "OpenApiConnection",
+        "inputs": {
+          "host": {
+            "connectionName": "shared_commondataserviceforapps",
+            "operationId": "UpdateRecord",
+            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+          },
+          "parameters": {
+            "entityName": "ai_usecases",
+            "recordId": "@triggerBody()['text']",
+            "item/ai_reviewedby": "@triggerBody()['text_1']",
+            "item/ai_reviewedat": "@utcNow()",
+            "item/ai_scorevalue": "@triggerBody()['number']",
+            "item/ai_scorefeasibility": "@triggerBody()['number_1']",
+            "item/ai_scoredata": "@triggerBody()['number_2']",
+            "item/ai_scorespeed": "@triggerBody()['number_3']",
+            "item/ai_scorerisk": "@triggerBody()['number_4']",
+            "item/ai_totalscore": "@outputs('Calculate_Total_Score')",
+            "item/ai_recommendation": "@outputs('Set_Recommendation')"
+          }
+        },
+        "runAfter": {
+          "Set_Recommendation": ["Succeeded"]
+        }
+      },
+      "Respond_to_PowerApps": {
+        "type": "Response",
+        "kind": "PowerApps",
+        "inputs": {
+          "statusCode": 200,
+          "body": {
+            "totalScore": "@outputs('Calculate_Total_Score')",
+            "recommendation": "@outputs('Set_Recommendation')"
+          }
+        },
+        "runAfter": {
+          "Update_UseCase": ["Succeeded"]
+        }
+      }
+    }
+  },
+  "connectionReferences": {
+    "shared_commondataserviceforapps": {
+      "runtimeSource": "embedded",
+      "connection": {},
+      "api": { "name": "shared_commondataserviceforapps" }
+    }
+  }
+}

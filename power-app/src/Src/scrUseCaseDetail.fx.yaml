@@ -1,0 +1,835 @@
+- scrUseCaseDetail As screen:
+    Fill: =RGBA(245, 245, 245, 1)
+    OnVisible: |-
+        =ClearCollect(
+            colComments,
+            SortByColumns(
+                Filter('ai_Comment', 'Use Case (ai_Comment)'.ai_UseCaseId = recSelectedUseCase.ai_UseCaseId),
+                "createdon",
+                Ascending
+            )
+        );
+        Set(recLiveUseCase, LookUp('ai_UseCase', ai_UseCaseId = recSelectedUseCase.ai_UseCaseId));
+        Set(gblEditScoreV, recLiveUseCase.ai_scorevalue);
+        Set(gblEditScoreF, recLiveUseCase.ai_scorefeasibility);
+        Set(gblEditScoreD, recLiveUseCase.ai_scoredata);
+        Set(gblEditScoreS, recLiveUseCase.ai_scorespeed);
+        Set(gblEditScoreR, recLiveUseCase.ai_scorerisk)
+
+    # ── Header ───────────────────────────────────────────────────
+    - recHeader As rectangle:
+        Fill: =RGBA(128, 0, 0, 1)
+        X: =0
+        Y: =0
+        Width: =App.Width
+        Height: =60
+
+    - btnBack As button:
+        Text: ="← Dashboard"
+        X: =16
+        Y: =15
+        Width: =140
+        Height: =30
+        Fill: =RGBA(100, 0, 0, 1)
+        Color: =RGBA(255, 255, 255, 1)
+        BorderRadius: =6
+        OnSelect: =Navigate(scrDashboard, ScreenTransition.Fade)
+
+    - lblUCTitle As label:
+        Text: =recLiveUseCase.ai_title
+        X: =170
+        Y: =0
+        Width: =600
+        Height: =60
+        Color: =RGBA(255, 255, 255, 1)
+        Size: =18
+        FontWeight: =FontWeight.Bold
+        VerticalAlign: =VerticalAlign.Middle
+
+    # Action buttons (top right)
+    - btnAnalyze As button:
+        Text: =If(gblAnalyzing, "Analysing…", "Run AI Analysis")
+        X: =App.Width - 380
+        Y: =14
+        Width: =168
+        Height: =32
+        Fill: =RGBA(128, 0, 0, 1)
+        Color: =RGBA(255, 255, 255, 1)
+        BorderRadius: =8
+        FontWeight: =FontWeight.Semibold
+        Visible: =recLiveUseCase.ai_status = "DRAFT"
+        DisplayMode: =If(gblAnalyzing, DisplayMode.Disabled, DisplayMode.Edit)
+        OnSelect: |-
+            =Set(gblAnalyzing, true);
+            AnalyzeUseCase.Run(recLiveUseCase.ai_UseCaseId);
+            Set(recLiveUseCase, LookUp('ai_UseCase', ai_UseCaseId = recSelectedUseCase.ai_UseCaseId));
+            Set(gblAnalyzing, false);
+            Notify("AI analysis complete", NotificationType.Success)
+
+    - btnSubmit As button:
+        Text: =If(gblSubmitting, "Submitting…", "Submit for Review")
+        X: =App.Width - 200
+        Y: =14
+        Width: =180
+        Height: =32
+        Fill: =RGBA(29, 78, 216, 1)
+        Color: =RGBA(255, 255, 255, 1)
+        BorderRadius: =8
+        FontWeight: =FontWeight.Semibold
+        Visible: =recLiveUseCase.ai_status = "DRAFT" && Not(IsBlank(recLiveUseCase.ai_totalscore))
+        DisplayMode: =If(gblSubmitting, DisplayMode.Disabled, DisplayMode.Edit)
+        OnSelect: |-
+            =Set(gblSubmitting, true);
+            SubmitUseCase.Run(recLiveUseCase.ai_UseCaseId, gblCurrentUser.name);
+            Set(recLiveUseCase, LookUp('ai_UseCase', ai_UseCaseId = recSelectedUseCase.ai_UseCaseId));
+            Set(gblSubmitting, false);
+            Notify("Submitted for review", NotificationType.Success)
+
+    # ── Status badges row ────────────────────────────────────────
+    - lblStatusBadge As label:
+        Text: =recLiveUseCase.ai_status
+        X: =24
+        Y: =74
+        Width: =110
+        Height: =28
+        Size: =12
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Center
+        VerticalAlign: =VerticalAlign.Middle
+        Color: =RGBA(255, 255, 255, 1)
+        Fill: |-
+            =Switch(
+                recLiveUseCase.ai_status,
+                "DRAFT", RGBA(107, 114, 128, 1),
+                "IN_REVIEW", RGBA(217, 119, 6, 1),
+                "APPROVED", RGBA(21, 128, 61, 1),
+                "REJECTED", RGBA(185, 28, 28, 1),
+                RGBA(107, 114, 128, 1)
+            )
+        RadiusTopLeft: =14
+        RadiusTopRight: =14
+        RadiusBottomLeft: =14
+        RadiusBottomRight: =14
+
+    - lblRecomBadge As label:
+        Text: =If(IsBlank(recLiveUseCase.ai_recommendation), "—", recLiveUseCase.ai_recommendation)
+        X: =144
+        Y: =74
+        Width: =120
+        Height: =28
+        Size: =12
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Center
+        VerticalAlign: =VerticalAlign.Middle
+        Color: =RGBA(255, 255, 255, 1)
+        Fill: |-
+            =Switch(
+                recLiveUseCase.ai_recommendation,
+                "QUICK_WIN", RGBA(21, 128, 61, 1),
+                "STRATEGIC", RGBA(29, 78, 216, 1),
+                "AVOID", RGBA(185, 28, 28, 1),
+                RGBA(107, 114, 128, 1)
+            )
+        RadiusTopLeft: =14
+        RadiusTopRight: =14
+        RadiusBottomLeft: =14
+        RadiusBottomRight: =14
+
+    - lblCategoryBadge As label:
+        Text: =recLiveUseCase.ai_category
+        X: =276
+        Y: =74
+        Width: =100
+        Height: =28
+        Size: =12
+        Align: =Align.Center
+        VerticalAlign: =VerticalAlign.Middle
+        Color: =RGBA(55, 65, 81, 1)
+        Fill: =RGBA(243, 244, 246, 1)
+        RadiusTopLeft: =14
+        RadiusTopRight: =14
+        RadiusBottomLeft: =14
+        RadiusBottomRight: =14
+        Visible: =Not(IsBlank(recLiveUseCase.ai_category))
+
+    # ── Details card ─────────────────────────────────────────────
+    - recDetailsCard As rectangle:
+        Fill: =RGBA(255, 255, 255, 1)
+        X: =24
+        Y: =116
+        Width: =App.Width - 48
+        Height: =140
+        RadiusTopLeft: =12
+        RadiusTopRight: =12
+        RadiusBottomLeft: =12
+        RadiusBottomRight: =12
+
+    - lblDescHdr As label:
+        Text: ="DESCRIPTION"
+        X: =40
+        Y: =124
+        Width: =300
+        Height: =16
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(156, 163, 175, 1)
+
+    - lblDescValue As label:
+        Text: =recLiveUseCase.ai_description
+        X: =40
+        Y: =142
+        Width: =(App.Width - 96) / 2
+        Height: =64
+        Size: =13
+        Color: =RGBA(55, 65, 81, 1)
+        VerticalAlign: =VerticalAlign.Top
+
+    - lblObjHdr As label:
+        Text: ="BUSINESS OBJECTIVE"
+        X: =(App.Width - 96) / 2 + 60
+        Y: =124
+        Width: =300
+        Height: =16
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(156, 163, 175, 1)
+
+    - lblObjValue As label:
+        Text: =recLiveUseCase.ai_businessobjective
+        X: =(App.Width - 96) / 2 + 60
+        Y: =142
+        Width: =(App.Width - 96) / 2
+        Height: =64
+        Size: =13
+        Color: =RGBA(55, 65, 81, 1)
+        VerticalAlign: =VerticalAlign.Top
+
+    - lblMetaLine As label:
+        Text: =recLiveUseCase.ai_businessunit & " · " & recLiveUseCase.ai_domain & " · " & recLiveUseCase.ai_workspace & " · " & recLiveUseCase.ai_owner
+        X: =40
+        Y: =216
+        Width: =App.Width - 112
+        Height: =28
+        Size: =12
+        Color: =RGBA(107, 114, 128, 1)
+        VerticalAlign: =VerticalAlign.Middle
+
+    # ── AI Analysis card ─────────────────────────────────────────
+    - recAICard As rectangle:
+        Fill: =RGBA(255, 255, 255, 1)
+        X: =24
+        Y: =272
+        Width: =App.Width - 48
+        Height: =160
+        RadiusTopLeft: =12
+        RadiusTopRight: =12
+        RadiusBottomLeft: =12
+        RadiusBottomRight: =12
+        Visible: =Not(IsBlank(recLiveUseCase.ai_aisummary))
+
+    - lblAICardTitle As label:
+        Text: ="AI Analysis"
+        X: =40
+        Y: =280
+        Width: =200
+        Height: =24
+        Size: =14
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(17, 24, 39, 1)
+        Visible: =Not(IsBlank(recLiveUseCase.ai_aisummary))
+
+    - lblSummaryHdr As label:
+        Text: ="SUMMARY"
+        X: =40
+        Y: =308
+        Width: =200
+        Height: =16
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(156, 163, 175, 1)
+        Visible: =Not(IsBlank(recLiveUseCase.ai_aisummary))
+
+    - lblSummaryValue As label:
+        Text: =recLiveUseCase.ai_aisummary
+        X: =40
+        Y: =326
+        Width: =(App.Width - 96) / 3
+        Height: =80
+        Size: =13
+        Color: =RGBA(55, 65, 81, 1)
+        VerticalAlign: =VerticalAlign.Top
+        Visible: =Not(IsBlank(recLiveUseCase.ai_aisummary))
+
+    - lblBPHdr As label:
+        Text: ="BUSINESS PROBLEM"
+        X: =(App.Width - 96) / 3 + 60
+        Y: =308
+        Width: =220
+        Height: =16
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(156, 163, 175, 1)
+        Visible: =Not(IsBlank(recLiveUseCase.ai_aisummary))
+
+    - lblBPValue As label:
+        Text: =recLiveUseCase.ai_businessproblem
+        X: =(App.Width - 96) / 3 + 60
+        Y: =326
+        Width: =(App.Width - 96) / 3
+        Height: =80
+        Size: =13
+        Color: =RGBA(55, 65, 81, 1)
+        VerticalAlign: =VerticalAlign.Top
+        Visible: =Not(IsBlank(recLiveUseCase.ai_aisummary))
+
+    - lblReasoningHdr As label:
+        Text: ="REASONING"
+        X: =(App.Width - 96) * 2 / 3 + 80
+        Y: =308
+        Width: =200
+        Height: =16
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(156, 163, 175, 1)
+        Visible: =Not(IsBlank(recLiveUseCase.ai_aisummary))
+
+    - lblReasoningValue As label:
+        Text: =recLiveUseCase.ai_reasoning
+        X: =(App.Width - 96) * 2 / 3 + 80
+        Y: =326
+        Width: =(App.Width - 96) / 3 - 20
+        Height: =80
+        Size: =13
+        Color: =RGBA(55, 65, 81, 1)
+        VerticalAlign: =VerticalAlign.Top
+        Visible: =Not(IsBlank(recLiveUseCase.ai_aisummary))
+
+    # ── Scores card ──────────────────────────────────────────────
+    - recScoresCard As rectangle:
+        Fill: =RGBA(255, 255, 255, 1)
+        X: =24
+        Y: =448
+        Width: =App.Width - 48
+        Height: =200
+        RadiusTopLeft: =12
+        RadiusTopRight: =12
+        RadiusBottomLeft: =12
+        RadiusBottomRight: =12
+
+    - lblScoresTitle As label:
+        Text: ="Scores"
+        X: =40
+        Y: =456
+        Width: =200
+        Height: =24
+        Size: =14
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(17, 24, 39, 1)
+
+    - lblTotalDisplay As label:
+        Text: =If(IsBlank(recLiveUseCase.ai_totalscore), "—", Text(recLiveUseCase.ai_totalscore, "0.#"))
+        X: =App.Width - 160
+        Y: =450
+        Width: =120
+        Height: =40
+        Size: =28
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Right
+        VerticalAlign: =VerticalAlign.Middle
+        Color: =RGBA(17, 24, 39, 1)
+
+    - lblTotalLabel As label:
+        Text: ="Total Score"
+        X: =App.Width - 160
+        Y: =488
+        Width: =120
+        Height: =18
+        Size: =11
+        Align: =Align.Right
+        Color: =RGBA(156, 163, 175, 1)
+
+    # Score display chips (Value, Feasibility, Data, Speed, Risk)
+    - lblScoreLblV As label:
+        Text: ="Value"
+        X: =40
+        Y: =492
+        Width: =90
+        Height: =18
+        Size: =11
+        Align: =Align.Center
+        Color: =RGBA(107, 114, 128, 1)
+
+    - lblScoreChipV As label:
+        Text: =If(IsBlank(recLiveUseCase.ai_scorevalue), "—", Text(recLiveUseCase.ai_scorevalue))
+        X: =50
+        Y: =512
+        Width: =70
+        Height: =40
+        Size: =20
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Center
+        VerticalAlign: =VerticalAlign.Middle
+        Color: =RGBA(255, 255, 255, 1)
+        Fill: |-
+            =Switch(
+                recLiveUseCase.ai_scorevalue,
+                5, RGBA(21, 128, 61, 1),
+                4, RGBA(74, 222, 128, 1),
+                3, RGBA(250, 204, 21, 1),
+                2, RGBA(249, 115, 22, 1),
+                1, RGBA(220, 38, 38, 1),
+                RGBA(229, 231, 235, 1)
+            )
+        RadiusTopLeft: =10
+        RadiusTopRight: =10
+        RadiusBottomLeft: =10
+        RadiusBottomRight: =10
+
+    - lblScoreLblF As label:
+        Text: ="Feasibility"
+        X: =160
+        Y: =492
+        Width: =100
+        Height: =18
+        Size: =11
+        Align: =Align.Center
+        Color: =RGBA(107, 114, 128, 1)
+
+    - lblScoreChipF As label:
+        Text: =If(IsBlank(recLiveUseCase.ai_scorefeasibility), "—", Text(recLiveUseCase.ai_scorefeasibility))
+        X: =170
+        Y: =512
+        Width: =70
+        Height: =40
+        Size: =20
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Center
+        VerticalAlign: =VerticalAlign.Middle
+        Color: =RGBA(255, 255, 255, 1)
+        Fill: |-
+            =Switch(
+                recLiveUseCase.ai_scorefeasibility,
+                5, RGBA(21, 128, 61, 1),
+                4, RGBA(74, 222, 128, 1),
+                3, RGBA(250, 204, 21, 1),
+                2, RGBA(249, 115, 22, 1),
+                1, RGBA(220, 38, 38, 1),
+                RGBA(229, 231, 235, 1)
+            )
+        RadiusTopLeft: =10
+        RadiusTopRight: =10
+        RadiusBottomLeft: =10
+        RadiusBottomRight: =10
+
+    - lblScoreLblD As label:
+        Text: ="Data"
+        X: =280
+        Y: =492
+        Width: =90
+        Height: =18
+        Size: =11
+        Align: =Align.Center
+        Color: =RGBA(107, 114, 128, 1)
+
+    - lblScoreChipD As label:
+        Text: =If(IsBlank(recLiveUseCase.ai_scoredata), "—", Text(recLiveUseCase.ai_scoredata))
+        X: =290
+        Y: =512
+        Width: =70
+        Height: =40
+        Size: =20
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Center
+        VerticalAlign: =VerticalAlign.Middle
+        Color: =RGBA(255, 255, 255, 1)
+        Fill: |-
+            =Switch(
+                recLiveUseCase.ai_scoredata,
+                5, RGBA(21, 128, 61, 1),
+                4, RGBA(74, 222, 128, 1),
+                3, RGBA(250, 204, 21, 1),
+                2, RGBA(249, 115, 22, 1),
+                1, RGBA(220, 38, 38, 1),
+                RGBA(229, 231, 235, 1)
+            )
+        RadiusTopLeft: =10
+        RadiusTopRight: =10
+        RadiusBottomLeft: =10
+        RadiusBottomRight: =10
+
+    - lblScoreLblS As label:
+        Text: ="Speed"
+        X: =400
+        Y: =492
+        Width: =90
+        Height: =18
+        Size: =11
+        Align: =Align.Center
+        Color: =RGBA(107, 114, 128, 1)
+
+    - lblScoreChipS As label:
+        Text: =If(IsBlank(recLiveUseCase.ai_scorespeed), "—", Text(recLiveUseCase.ai_scorespeed))
+        X: =410
+        Y: =512
+        Width: =70
+        Height: =40
+        Size: =20
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Center
+        VerticalAlign: =VerticalAlign.Middle
+        Color: =RGBA(255, 255, 255, 1)
+        Fill: |-
+            =Switch(
+                recLiveUseCase.ai_scorespeed,
+                5, RGBA(21, 128, 61, 1),
+                4, RGBA(74, 222, 128, 1),
+                3, RGBA(250, 204, 21, 1),
+                2, RGBA(249, 115, 22, 1),
+                1, RGBA(220, 38, 38, 1),
+                RGBA(229, 231, 235, 1)
+            )
+        RadiusTopLeft: =10
+        RadiusTopRight: =10
+        RadiusBottomLeft: =10
+        RadiusBottomRight: =10
+
+    - lblScoreLblR As label:
+        Text: ="Risk (penalises)"
+        X: =510
+        Y: =492
+        Width: =120
+        Height: =18
+        Size: =11
+        Align: =Align.Center
+        Color: =RGBA(107, 114, 128, 1)
+
+    - lblScoreChipR As label:
+        Text: =If(IsBlank(recLiveUseCase.ai_scorerisk), "—", Text(recLiveUseCase.ai_scorerisk))
+        X: =530
+        Y: =512
+        Width: =70
+        Height: =40
+        Size: =20
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Center
+        VerticalAlign: =VerticalAlign.Middle
+        Color: =RGBA(255, 255, 255, 1)
+        Fill: |-
+            =Switch(
+                recLiveUseCase.ai_scorerisk,
+                5, RGBA(220, 38, 38, 1),
+                4, RGBA(249, 115, 22, 1),
+                3, RGBA(250, 204, 21, 1),
+                2, RGBA(74, 222, 128, 1),
+                1, RGBA(21, 128, 61, 1),
+                RGBA(229, 231, 235, 1)
+            )
+        RadiusTopLeft: =10
+        RadiusTopRight: =10
+        RadiusBottomLeft: =10
+        RadiusBottomRight: =10
+
+    # ── Score editor (Reviewer only) ──────────────────────────────
+    - recScoreEditor As rectangle:
+        Fill: =RGBA(249, 250, 251, 1)
+        X: =40
+        Y: =566
+        Width: =App.Width - 112
+        Height: =70
+        RadiusTopLeft: =8
+        RadiusTopRight: =8
+        RadiusBottomLeft: =8
+        RadiusBottomRight: =8
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+
+    - lblEditV As label:
+        Text: ="Value"
+        X: =52
+        Y: =570
+        Width: =80
+        Height: =16
+        Size: =11
+        Color: =RGBA(107, 114, 128, 1)
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+
+    - ddlEditV As dropdown:
+        Items: =["1","2","3","4","5"]
+        X: =52
+        Y: =588
+        Width: =80
+        Height: =32
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+        OnChange: =Set(gblEditScoreV, Value(ddlEditV.Selected.Value))
+
+    - lblEditF As label:
+        Text: ="Feasibility"
+        X: =148
+        Y: =570
+        Width: =90
+        Height: =16
+        Size: =11
+        Color: =RGBA(107, 114, 128, 1)
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+
+    - ddlEditF As dropdown:
+        Items: =["1","2","3","4","5"]
+        X: =148
+        Y: =588
+        Width: =80
+        Height: =32
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+        OnChange: =Set(gblEditScoreF, Value(ddlEditF.Selected.Value))
+
+    - lblEditD As label:
+        Text: ="Data"
+        X: =244
+        Y: =570
+        Width: =80
+        Height: =16
+        Size: =11
+        Color: =RGBA(107, 114, 128, 1)
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+
+    - ddlEditD As dropdown:
+        Items: =["1","2","3","4","5"]
+        X: =244
+        Y: =588
+        Width: =80
+        Height: =32
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+        OnChange: =Set(gblEditScoreD, Value(ddlEditD.Selected.Value))
+
+    - lblEditS As label:
+        Text: ="Speed"
+        X: =340
+        Y: =570
+        Width: =80
+        Height: =16
+        Size: =11
+        Color: =RGBA(107, 114, 128, 1)
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+
+    - ddlEditS As dropdown:
+        Items: =["1","2","3","4","5"]
+        X: =340
+        Y: =588
+        Width: =80
+        Height: =32
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+        OnChange: =Set(gblEditScoreS, Value(ddlEditS.Selected.Value))
+
+    - lblEditR As label:
+        Text: ="Risk"
+        X: =436
+        Y: =570
+        Width: =80
+        Height: =16
+        Size: =11
+        Color: =RGBA(107, 114, 128, 1)
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+
+    - ddlEditR As dropdown:
+        Items: =["1","2","3","4","5"]
+        X: =436
+        Y: =588
+        Width: =80
+        Height: =32
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+        OnChange: =Set(gblEditScoreR, Value(ddlEditR.Selected.Value))
+
+    - btnSaveReview As button:
+        Text: ="Save Review"
+        X: =532
+        Y: =584
+        Width: =130
+        Height: =36
+        Fill: =RGBA(128, 0, 0, 1)
+        Color: =RGBA(255, 255, 255, 1)
+        BorderRadius: =8
+        FontWeight: =FontWeight.Semibold
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Reviewer"
+        OnSelect: |-
+            =ReviewUseCase.Run(
+                recLiveUseCase.ai_UseCaseId,
+                gblCurrentUser.name,
+                gblEditScoreV,
+                gblEditScoreF,
+                gblEditScoreD,
+                gblEditScoreS,
+                gblEditScoreR
+            );
+            Set(recLiveUseCase, LookUp('ai_UseCase', ai_UseCaseId = recSelectedUseCase.ai_UseCaseId));
+            Notify("Review saved", NotificationType.Success)
+
+    # ── Approve / Reject (Approver only) ─────────────────────────
+    - recApproveCard As rectangle:
+        Fill: =RGBA(255, 255, 255, 1)
+        X: =24
+        Y: =660
+        Width: =App.Width - 48
+        Height: =72
+        RadiusTopLeft: =12
+        RadiusTopRight: =12
+        RadiusBottomLeft: =12
+        RadiusBottomRight: =12
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Approver"
+
+    - btnApprove As button:
+        Text: ="Approve"
+        X: =40
+        Y: =674
+        Width: =140
+        Height: =40
+        Fill: =RGBA(21, 128, 61, 1)
+        Color: =RGBA(255, 255, 255, 1)
+        BorderRadius: =8
+        FontWeight: =FontWeight.Bold
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Approver"
+        OnSelect: |-
+            =ApproveUseCase.Run(recLiveUseCase.ai_UseCaseId, gblCurrentUser.name);
+            Set(recLiveUseCase, LookUp('ai_UseCase', ai_UseCaseId = recSelectedUseCase.ai_UseCaseId));
+            Notify("Use case approved", NotificationType.Success)
+
+    - btnReject As button:
+        Text: ="Reject"
+        X: =196
+        Y: =674
+        Width: =140
+        Height: =40
+        Fill: =RGBA(185, 28, 28, 1)
+        Color: =RGBA(255, 255, 255, 1)
+        BorderRadius: =8
+        FontWeight: =FontWeight.Bold
+        Visible: =recLiveUseCase.ai_status = "IN_REVIEW" && gblCurrentRole = "Approver"
+        OnSelect: |-
+            =RejectUseCase.Run(recLiveUseCase.ai_UseCaseId, gblCurrentUser.name);
+            Set(recLiveUseCase, LookUp('ai_UseCase', ai_UseCaseId = recSelectedUseCase.ai_UseCaseId));
+            Notify("Use case rejected", NotificationType.Warning)
+
+    # ── Comments ─────────────────────────────────────────────────
+    - recCommentsCard As rectangle:
+        Fill: =RGBA(255, 255, 255, 1)
+        X: =24
+        Y: =748
+        Width: =App.Width - 48
+        Height: =300
+        RadiusTopLeft: =12
+        RadiusTopRight: =12
+        RadiusBottomLeft: =12
+        RadiusBottomRight: =12
+
+    - lblCommentsTitle As label:
+        Text: ="Comments"
+        X: =40
+        Y: =756
+        Width: =200
+        Height: =24
+        Size: =14
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(17, 24, 39, 1)
+
+    - galComments As gallery.Vertical:
+        Items: =colComments
+        X: =40
+        Y: =786
+        Width: =App.Width - 112
+        Height: =200
+        TemplateSize: =72
+        TemplatePadding: =4
+        ShowScrollbar: =true
+
+        - recCommentBg As rectangle:
+            Fill: =RGBA(249, 250, 251, 1)
+            X: =0
+            Y: =0
+            Width: =Parent.TemplateWidth
+            Height: =Parent.TemplateSize - 4
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+
+        - lblCommentAuthor As label:
+            Text: =ThisItem.ai_author
+            X: =12
+            Y: =8
+            Width: =200
+            Height: =20
+            Size: =13
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(17, 24, 39, 1)
+
+        - lblCommentRole As label:
+            Text: =ThisItem.ai_role
+            X: =220
+            Y: =8
+            Width: =100
+            Height: =20
+            Size: =12
+            Color: =RGBA(107, 114, 128, 1)
+
+        - lblCommentTime As label:
+            Text: =Text(ThisItem.'Created On', "dd/mm/yyyy hh:mm")
+            X: =Parent.TemplateWidth - 160
+            Y: =8
+            Width: =148
+            Height: =20
+            Size: =11
+            Color: =RGBA(156, 163, 175, 1)
+            Align: =Align.Right
+
+        - lblCommentContent As label:
+            Text: =ThisItem.ai_content
+            X: =12
+            Y: =30
+            Width: =Parent.TemplateWidth - 24
+            Height: =30
+            Size: =13
+            Color: =RGBA(55, 65, 81, 1)
+            VerticalAlign: =VerticalAlign.Top
+
+    # Comment input
+    - txtCommentInput As text:
+        Default: =""
+        X: =40
+        Y: =994
+        Width: =App.Width - 216
+        Height: =36
+        Size: =13
+        BorderColor: =RGBA(209, 213, 219, 1)
+        FocusedBorderColor: =RGBA(128, 0, 0, 1)
+        RadiusTopLeft: =8
+        RadiusTopRight: =8
+        RadiusBottomLeft: =8
+        RadiusBottomRight: =8
+        HintText: ="Add a comment…"
+        Visible: =recLiveUseCase.ai_status <> "APPROVED"
+
+    - btnPostComment As button:
+        Text: ="Post"
+        X: =App.Width - 168
+        Y: =994
+        Width: =120
+        Height: =36
+        Fill: =RGBA(128, 0, 0, 1)
+        Color: =RGBA(255, 255, 255, 1)
+        BorderRadius: =8
+        FontWeight: =FontWeight.Semibold
+        Visible: =recLiveUseCase.ai_status <> "APPROVED"
+        DisplayMode: =If(IsBlank(txtCommentInput.Text), DisplayMode.Disabled, DisplayMode.Edit)
+        OnSelect: |-
+            =AddComment.Run(
+                recLiveUseCase.ai_UseCaseId,
+                txtCommentInput.Text,
+                gblCurrentUser.name,
+                gblCurrentRole
+            );
+            Reset(txtCommentInput);
+            ClearCollect(
+                colComments,
+                SortByColumns(
+                    Filter('ai_Comment', 'Use Case (ai_Comment)'.ai_UseCaseId = recSelectedUseCase.ai_UseCaseId),
+                    "createdon",
+                    Ascending
+                )
+            )

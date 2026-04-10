@@ -1,0 +1,388 @@
+- scrClientProfile As screen:
+    Fill: =RGBA(245, 245, 245, 1)
+    OnVisible: |-
+        =ClearCollect(colProfiles, 'ai_ClientProfile');
+        ClearCollect(colSystems, Blank());
+        ClearCollect(colIntegrations, Blank());
+        ClearCollect(colDataPlatforms, Blank());
+        ClearCollect(colChannels, Blank());
+        ClearCollect(colConstraints, Blank())
+
+    # ── Header ───────────────────────────────────────────────────
+    - recHeader As rectangle:
+        Fill: =RGBA(128, 0, 0, 1)
+        X: =0
+        Y: =0
+        Width: =App.Width
+        Height: =60
+
+    - btnBack As button:
+        Text: ="← Dashboard"
+        X: =16
+        Y: =15
+        Width: =140
+        Height: =30
+        Fill: =RGBA(100, 0, 0, 1)
+        Color: =RGBA(255, 255, 255, 1)
+        BorderRadius: =6
+        OnSelect: =Navigate(scrDashboard, ScreenTransition.Fade)
+
+    - lblPageTitle As label:
+        Text: ="Client Profile"
+        X: =170
+        Y: =0
+        Width: =300
+        Height: =60
+        Color: =RGBA(255, 255, 255, 1)
+        Size: =18
+        FontWeight: =FontWeight.Bold
+        VerticalAlign: =VerticalAlign.Middle
+
+    # ── Existing profiles ────────────────────────────────────────
+    - recExistingCard As rectangle:
+        Fill: =RGBA(255, 255, 255, 1)
+        X: =24
+        Y: =80
+        Width: =App.Width - 48
+        Height: =200
+        RadiusTopLeft: =12
+        RadiusTopRight: =12
+        RadiusBottomLeft: =12
+        RadiusBottomRight: =12
+        Visible: =CountRows(colProfiles) > 0
+
+    - lblExistingTitle As label:
+        Text: ="Existing Profiles"
+        X: =40
+        Y: =92
+        Width: =300
+        Height: =28
+        Size: =15
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(17, 24, 39, 1)
+        Visible: =CountRows(colProfiles) > 0
+
+    - galProfiles As gallery.Vertical:
+        Items: =colProfiles
+        X: =40
+        Y: =124
+        Width: =App.Width - 80
+        Height: =140
+        TemplateSize: =44
+        TemplatePadding: =4
+        ShowScrollbar: =false
+        Visible: =CountRows(colProfiles) > 0
+
+        - recProfileBg As rectangle:
+            Fill: |-
+                =If(
+                    ThisItem.ai_ClientProfileId = gblActiveClientId,
+                    RGBA(253, 242, 242, 1),
+                    RGBA(249, 250, 251, 1)
+                )
+            X: =0
+            Y: =0
+            Width: =Parent.TemplateWidth
+            Height: =Parent.TemplateSize - 4
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            OnSelect: |-
+                =Set(gblActiveClientId, ThisItem.ai_ClientProfileId);
+                Set(gblActiveClientName, ThisItem.ai_name)
+
+        - lblProfileName As label:
+            Text: =ThisItem.ai_name
+            X: =12
+            Y: =4
+            Width: =400
+            Height: =32
+            Size: =13
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(17, 24, 39, 1)
+            VerticalAlign: =VerticalAlign.Middle
+
+        - lblProfileMeta As label:
+            Text: =ThisItem.ai_cloudenv & " · " & ThisItem.ai_dataquality & " data quality"
+            X: =420
+            Y: =4
+            Width: =400
+            Height: =32
+            Size: =12
+            Color: =RGBA(107, 114, 128, 1)
+            VerticalAlign: =VerticalAlign.Middle
+
+        - lblActiveCheck As label:
+            Text: ="✓ Active"
+            X: =Parent.TemplateWidth - 90
+            Y: =4
+            Width: =80
+            Height: =32
+            Size: =12
+            FontWeight: =FontWeight.Bold
+            Color: =RGBA(128, 0, 0, 1)
+            VerticalAlign: =VerticalAlign.Middle
+            Align: =Align.Right
+            Visible: =ThisItem.ai_ClientProfileId = gblActiveClientId
+
+    # ── New profile form ─────────────────────────────────────────
+    - recFormCard As rectangle:
+        Fill: =RGBA(255, 255, 255, 1)
+        X: =24
+        Y: =300
+        Width: =App.Width - 48
+        Height: =560
+        RadiusTopLeft: =12
+        RadiusTopRight: =12
+        RadiusBottomLeft: =12
+        RadiusBottomRight: =12
+
+    - lblFormTitle As label:
+        Text: ="New Profile"
+        X: =40
+        Y: =312
+        Width: =300
+        Height: =28
+        Size: =15
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(17, 24, 39, 1)
+
+    # Client Name
+    - lblClientName As label:
+        Text: ="Client Name *"
+        X: =40
+        Y: =352
+        Width: =200
+        Height: =20
+        Size: =13
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(55, 65, 81, 1)
+
+    - txtClientName As text:
+        Default: =""
+        X: =40
+        Y: =374
+        Width: =App.Width - 112
+        Height: =36
+        Size: =13
+        BorderColor: =RGBA(209, 213, 219, 1)
+        FocusedBorderColor: =RGBA(128, 0, 0, 1)
+        RadiusTopLeft: =8
+        RadiusTopRight: =8
+        RadiusBottomLeft: =8
+        RadiusBottomRight: =8
+        HintText: ="e.g. Acme Insurance"
+
+    # Systems tag input
+    - lblSystems As label:
+        Text: ="Core Systems"
+        X: =40
+        Y: =424
+        Width: =200
+        Height: =20
+        Size: =13
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(55, 65, 81, 1)
+
+    - galSystemTags As gallery.Horizontal:
+        Items: =colSystems
+        X: =40
+        Y: =446
+        Width: =App.Width - 320
+        Height: =32
+        TemplateSize: =80
+        TemplatePadding: =4
+        ShowScrollbar: =false
+
+        - lblTag As label:
+            Text: =ThisItem.Value & "  ×"
+            X: =0
+            Y: =0
+            Width: =Parent.TemplateSize
+            Height: =28
+            Size: =12
+            Color: =RGBA(128, 0, 0, 1)
+            Fill: =RGBA(253, 242, 242, 1)
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            OnSelect: =Remove(colSystems, ThisItem)
+
+    - txtSystemInput As text:
+        Default: =""
+        X: =App.Width - 270
+        Y: =446
+        Width: =180
+        Height: =32
+        Size: =12
+        BorderColor: =RGBA(209, 213, 219, 1)
+        RadiusTopLeft: =8
+        RadiusTopRight: =8
+        RadiusBottomLeft: =8
+        RadiusBottomRight: =8
+        HintText: ="SAP, CRM..."
+
+    - btnAddSystem As button:
+        Text: ="Add"
+        X: =App.Width - 82
+        Y: =446
+        Width: =58
+        Height: =32
+        Fill: =RGBA(243, 244, 246, 1)
+        Color: =RGBA(55, 65, 81, 1)
+        BorderRadius: =8
+        OnSelect: |-
+            =If(
+                Not(IsBlank(txtSystemInput.Text)),
+                Collect(colSystems, {Value: txtSystemInput.Text});
+                Reset(txtSystemInput)
+            )
+
+    # Cloud / Data Quality
+    - lblCloudEnv As label:
+        Text: ="Cloud Environment"
+        X: =40
+        Y: =492
+        Width: =200
+        Height: =20
+        Size: =13
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(55, 65, 81, 1)
+
+    - ddlCloudEnv As dropdown:
+        Items: =["AWS","Azure","GCP","Hybrid","On-Premise"]
+        X: =40
+        Y: =514
+        Width: =200
+        Height: =36
+
+    - lblDataQuality As label:
+        Text: ="Data Quality"
+        X: =260
+        Y: =492
+        Width: =200
+        Height: =20
+        Size: =13
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(55, 65, 81, 1)
+
+    - ddlDataQuality As dropdown:
+        Items: =["High","Medium","Low"]
+        X: =260
+        Y: =514
+        Width: =200
+        Height: =36
+
+    # Constraints tag input (same pattern as Systems - replicate for Integrations, DataPlatforms, Channels)
+    - lblConstraints As label:
+        Text: ="Constraints"
+        X: =40
+        Y: =564
+        Width: =200
+        Height: =20
+        Size: =13
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(55, 65, 81, 1)
+
+    - galConstraintTags As gallery.Horizontal:
+        Items: =colConstraints
+        X: =40
+        Y: =586
+        Width: =App.Width - 320
+        Height: =32
+        TemplateSize: =90
+        TemplatePadding: =4
+        ShowScrollbar: =false
+
+        - lblConTag As label:
+            Text: =ThisItem.Value & "  ×"
+            X: =0
+            Y: =0
+            Width: =Parent.TemplateSize
+            Height: =28
+            Size: =12
+            Color: =RGBA(128, 0, 0, 1)
+            Fill: =RGBA(253, 242, 242, 1)
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            OnSelect: =Remove(colConstraints, ThisItem)
+
+    - txtConstraintInput As text:
+        Default: =""
+        X: =App.Width - 270
+        Y: =586
+        Width: =180
+        Height: =32
+        Size: =12
+        BorderColor: =RGBA(209, 213, 219, 1)
+        RadiusTopLeft: =8
+        RadiusTopRight: =8
+        RadiusBottomLeft: =8
+        RadiusBottomRight: =8
+        HintText: ="POPIA, legacy..."
+
+    - btnAddConstraint As button:
+        Text: ="Add"
+        X: =App.Width - 82
+        Y: =586
+        Width: =58
+        Height: =32
+        Fill: =RGBA(243, 244, 246, 1)
+        Color: =RGBA(55, 65, 81, 1)
+        BorderRadius: =8
+        OnSelect: |-
+            =If(
+                Not(IsBlank(txtConstraintInput.Text)),
+                Collect(colConstraints, {Value: txtConstraintInput.Text});
+                Reset(txtConstraintInput)
+            )
+
+    # Save button
+    - btnSaveProfile As button:
+        Text: ="Save Profile"
+        X: =40
+        Y: =640
+        Width: =160
+        Height: =40
+        Fill: =RGBA(128, 0, 0, 1)
+        Color: =RGBA(255, 255, 255, 1)
+        BorderRadius: =8
+        FontWeight: =FontWeight.Bold
+        OnSelect: |-
+            =If(
+                IsBlank(txtClientName.Text),
+                Notify("Client Name is required", NotificationType.Warning),
+                With(
+                    {
+                        newProfile: Patch(
+                            'ai_ClientProfile',
+                            Defaults('ai_ClientProfile'),
+                            {
+                                ai_name: txtClientName.Text,
+                                ai_systems: Concat(colSystems, Value, ","),
+                                ai_integrations: Concat(colIntegrations, Value, ","),
+                                ai_dataplatforms: Concat(colDataPlatforms, Value, ","),
+                                ai_channels: Concat(colChannels, Value, ","),
+                                ai_cloudenv: ddlCloudEnv.Selected.Value,
+                                ai_dataquality: ddlDataQuality.Selected.Value,
+                                ai_constraints: Concat(colConstraints, Value, ",")
+                            }
+                        )
+                    },
+                    Set(gblActiveClientId, newProfile.ai_ClientProfileId);
+                    Set(gblActiveClientName, newProfile.ai_name);
+                    ClearCollect(colProfiles, 'ai_ClientProfile');
+                    Reset(txtClientName);
+                    ClearCollect(colSystems, Blank());
+                    ClearCollect(colConstraints, Blank());
+                    Notify("Profile saved and set as active", NotificationType.Success)
+                )
+            )

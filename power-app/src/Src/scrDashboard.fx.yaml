@@ -1,0 +1,686 @@
+- scrDashboard As screen:
+    Fill: =RGBA(245, 245, 245, 1)
+    OnVisible: |-
+        =ClearCollect(
+            colUseCases,
+            SortByColumns(
+                'ai_UseCase',
+                "ai_totalscore",
+                Descending
+            )
+        )
+
+    # ── Header bar ──────────────────────────────────────────────
+    - recHeader As rectangle:
+        Fill: =RGBA(128, 0, 0, 1)
+        X: =0
+        Y: =0
+        Width: =App.Width
+        Height: =60
+
+    - lblAppTitle As label:
+        Text: ="AI Use Case Selection"
+        X: =24
+        Y: =0
+        Width: =400
+        Height: =60
+        Color: =RGBA(255, 255, 255, 1)
+        Size: =18
+        FontWeight: =FontWeight.Bold
+        VerticalAlign: =VerticalAlign.Middle
+
+    - lblUserName As label:
+        Text: =gblCurrentUser.name & " · " & gblCurrentRole
+        X: =App.Width - 340
+        Y: =0
+        Width: =220
+        Height: =60
+        Color: =RGBA(255, 200, 200, 1)
+        Size: =13
+        Align: =Align.Right
+        VerticalAlign: =VerticalAlign.Middle
+
+    - ddlRoleSelector As dropdown:
+        Items: =colRoles
+        X: =App.Width - 180
+        Y: =15
+        Width: =160
+        Height: =30
+        OnChange: =Set(gblCurrentRole, ddlRoleSelector.Selected.Value)
+
+    - btnNavProfile As button:
+        Text: ="Client Profile"
+        X: =App.Width - 480
+        Y: =15
+        Width: =130
+        Height: =30
+        Fill: =RGBA(100, 0, 0, 1)
+        Color: =RGBA(255, 255, 255, 1)
+        BorderRadius: =6
+        OnSelect: =Navigate(scrClientProfile, ScreenTransition.Fade)
+
+    # ── Summary cards ────────────────────────────────────────────
+    - recCardTotal As rectangle:
+        Fill: =RGBA(55, 65, 81, 1)
+        X: =24
+        Y: =80
+        Width: =200
+        Height: =90
+        RadiusTopLeft: =12
+        RadiusTopRight: =12
+        RadiusBottomLeft: =12
+        RadiusBottomRight: =12
+
+    - lblCardTotalNum As label:
+        Text: =Text(CountRows(colUseCases))
+        X: =24
+        Y: =88
+        Width: =200
+        Height: =50
+        Color: =RGBA(255, 255, 255, 1)
+        Size: =32
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Center
+
+    - lblCardTotalLabel As label:
+        Text: ="Total Use Cases"
+        X: =24
+        Y: =138
+        Width: =200
+        Height: =24
+        Color: =RGBA(200, 200, 200, 1)
+        Size: =12
+        Align: =Align.Center
+
+    - recCardQuickWin As rectangle:
+        Fill: =RGBA(21, 128, 61, 1)
+        X: =240
+        Y: =80
+        Width: =200
+        Height: =90
+        RadiusTopLeft: =12
+        RadiusTopRight: =12
+        RadiusBottomLeft: =12
+        RadiusBottomRight: =12
+
+    - lblCardQWNum As label:
+        Text: =Text(CountIf(colUseCases, ai_recommendation = "QUICK_WIN"))
+        X: =240
+        Y: =88
+        Width: =200
+        Height: =50
+        Color: =RGBA(255, 255, 255, 1)
+        Size: =32
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Center
+
+    - lblCardQWLabel As label:
+        Text: ="Quick Wins"
+        X: =240
+        Y: =138
+        Width: =200
+        Height: =24
+        Color: =RGBA(200, 240, 200, 1)
+        Size: =12
+        Align: =Align.Center
+
+    - recCardStrategic As rectangle:
+        Fill: =RGBA(29, 78, 216, 1)
+        X: =456
+        Y: =80
+        Width: =200
+        Height: =90
+        RadiusTopLeft: =12
+        RadiusTopRight: =12
+        RadiusBottomLeft: =12
+        RadiusBottomRight: =12
+
+    - lblCardStNum As label:
+        Text: =Text(CountIf(colUseCases, ai_recommendation = "STRATEGIC"))
+        X: =456
+        Y: =88
+        Width: =200
+        Height: =50
+        Color: =RGBA(255, 255, 255, 1)
+        Size: =32
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Center
+
+    - lblCardStLabel As label:
+        Text: ="Strategic"
+        X: =456
+        Y: =138
+        Width: =200
+        Height: =24
+        Color: =RGBA(200, 220, 255, 1)
+        Size: =12
+        Align: =Align.Center
+
+    - recCardAvoid As rectangle:
+        Fill: =RGBA(185, 28, 28, 1)
+        X: =672
+        Y: =80
+        Width: =200
+        Height: =90
+        RadiusTopLeft: =12
+        RadiusTopRight: =12
+        RadiusBottomLeft: =12
+        RadiusBottomRight: =12
+
+    - lblCardAvNum As label:
+        Text: =Text(CountIf(colUseCases, ai_recommendation = "AVOID"))
+        X: =672
+        Y: =88
+        Width: =200
+        Height: =50
+        Color: =RGBA(255, 255, 255, 1)
+        Size: =32
+        FontWeight: =FontWeight.Bold
+        Align: =Align.Center
+
+    - lblCardAvLabel As label:
+        Text: ="Avoid"
+        X: =672
+        Y: =138
+        Width: =200
+        Height: =24
+        Color: =RGBA(255, 200, 200, 1)
+        Size: =12
+        Align: =Align.Center
+
+    # ── Filters ──────────────────────────────────────────────────
+    - recFilters As rectangle:
+        Fill: =RGBA(255, 255, 255, 1)
+        X: =24
+        Y: =190
+        Width: =App.Width - 48
+        Height: =60
+        RadiusTopLeft: =10
+        RadiusTopRight: =10
+        RadiusBottomLeft: =10
+        RadiusBottomRight: =10
+
+    - lblFilterBU As label:
+        Text: ="Business Unit"
+        X: =36
+        Y: =196
+        Width: =120
+        Height: =16
+        Size: =11
+        Color: =RGBA(107, 114, 128, 1)
+
+    - ddlFilterBU As dropdown:
+        Items: =["All","Claims","Underwriting","Finance","Operations","HR","IT","CX"]
+        X: =36
+        Y: =212
+        Width: =150
+        Height: =32
+
+    - lblFilterDomain As label:
+        Text: ="Domain"
+        X: =200
+        Y: =196
+        Width: =100
+        Height: =16
+        Size: =11
+        Color: =RGBA(107, 114, 128, 1)
+
+    - ddlFilterDomain As dropdown:
+        Items: =["All","Fraud","Claims","CX","Operations","Underwriting","Finance","HR","Other"]
+        X: =200
+        Y: =212
+        Width: =150
+        Height: =32
+
+    - lblFilterStatus As label:
+        Text: ="Status"
+        X: =364
+        Y: =196
+        Width: =100
+        Height: =16
+        Size: =11
+        Color: =RGBA(107, 114, 128, 1)
+
+    - ddlFilterStatus As dropdown:
+        Items: =["All","DRAFT","IN_REVIEW","APPROVED","REJECTED"]
+        X: =364
+        Y: =212
+        Width: =150
+        Height: =32
+
+    - lblFilterRecom As label:
+        Text: ="Recommendation"
+        X: =528
+        Y: =196
+        Width: =140
+        Height: =16
+        Size: =11
+        Color: =RGBA(107, 114, 128, 1)
+
+    - ddlFilterRecom As dropdown:
+        Items: =["All","QUICK_WIN","STRATEGIC","AVOID"]
+        X: =528
+        Y: =212
+        Width: =150
+        Height: =32
+
+    - btnNewUseCase As button:
+        Text: ="+ New Use Case"
+        X: =App.Width - 172
+        Y: =204
+        Width: =148
+        Height: =36
+        Fill: =RGBA(128, 0, 0, 1)
+        Color: =RGBA(255, 255, 255, 1)
+        BorderRadius: =8
+        FontWeight: =FontWeight.Bold
+        OnSelect: |-
+            =If(
+                IsBlank(gblActiveClientId),
+                Notify("Please select a Client Profile first", NotificationType.Warning),
+                Navigate(scrNewUseCase, ScreenTransition.Fade)
+            )
+
+    # ── Table header ─────────────────────────────────────────────
+    - recTableHeader As rectangle:
+        Fill: =RGBA(249, 250, 251, 1)
+        X: =24
+        Y: =268
+        Width: =App.Width - 48
+        Height: =36
+
+    - lblHdrTitle As label:
+        Text: ="USE CASE"
+        X: =36
+        Y: =276
+        Width: =200
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+
+    - lblHdrBU As label:
+        Text: ="BUSINESS UNIT"
+        X: =244
+        Y: =276
+        Width: =130
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+
+    - lblHdrDomain As label:
+        Text: ="DOMAIN"
+        X: =382
+        Y: =276
+        Width: =100
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+
+    - lblHdrOwner As label:
+        Text: ="OWNER"
+        X: =490
+        Y: =276
+        Width: =100
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+
+    - lblHdrV As label:
+        Text: ="V"
+        X: =598
+        Y: =276
+        Width: =40
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+        Align: =Align.Center
+
+    - lblHdrF As label:
+        Text: ="F"
+        X: =644
+        Y: =276
+        Width: =40
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+        Align: =Align.Center
+
+    - lblHdrD As label:
+        Text: ="D"
+        X: =690
+        Y: =276
+        Width: =40
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+        Align: =Align.Center
+
+    - lblHdrS As label:
+        Text: ="S"
+        X: =736
+        Y: =276
+        Width: =40
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+        Align: =Align.Center
+
+    - lblHdrR As label:
+        Text: ="R"
+        X: =782
+        Y: =276
+        Width: =40
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+        Align: =Align.Center
+
+    - lblHdrTotal As label:
+        Text: ="TOTAL"
+        X: =828
+        Y: =276
+        Width: =60
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+        Align: =Align.Center
+
+    - lblHdrRecom As label:
+        Text: ="RECOMMENDATION"
+        X: =894
+        Y: =276
+        Width: =140
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+
+    - lblHdrStatus As label:
+        Text: ="STATUS"
+        X: =1040
+        Y: =276
+        Width: =100
+        Height: =20
+        Size: =11
+        FontWeight: =FontWeight.Semibold
+        Color: =RGBA(107, 114, 128, 1)
+
+    # ── Use Case gallery ─────────────────────────────────────────
+    - galUseCases As gallery.Vertical:
+        Items: |-
+            =Filter(
+                colUseCases,
+                (ddlFilterBU.Selected.Value = "All" || ai_businessunit = ddlFilterBU.Selected.Value),
+                (ddlFilterDomain.Selected.Value = "All" || ai_domain = ddlFilterDomain.Selected.Value),
+                (ddlFilterStatus.Selected.Value = "All" || ai_status = ddlFilterStatus.Selected.Value),
+                (ddlFilterRecom.Selected.Value = "All" || ai_recommendation = ddlFilterRecom.Selected.Value)
+            )
+        X: =24
+        Y: =304
+        Width: =App.Width - 48
+        Height: =App.Height - 320
+        TemplatePadding: =0
+        TemplateSize: =52
+        ShowScrollbar: =true
+
+        - recRowBg As rectangle:
+            Fill: =RGBA(255, 255, 255, 1)
+            X: =0
+            Y: =0
+            Width: =Parent.TemplateWidth
+            Height: =Parent.TemplateSize - 1
+            OnSelect: |-
+                =Set(recSelectedUseCase, ThisItem);
+                Navigate(scrUseCaseDetail, ScreenTransition.Fade)
+
+        - recRowDivider As rectangle:
+            Fill: =RGBA(229, 231, 235, 1)
+            X: =0
+            Y: =Parent.TemplateSize - 1
+            Width: =Parent.TemplateWidth
+            Height: =1
+
+        - lblRowTitle As label:
+            Text: =ThisItem.ai_title
+            X: =12
+            Y: =8
+            Width: =200
+            Height: =36
+            Size: =13
+            FontWeight: =FontWeight.Semibold
+            Color: =RGBA(128, 0, 0, 1)
+            VerticalAlign: =VerticalAlign.Middle
+            OnSelect: |-
+                =Set(recSelectedUseCase, ThisItem);
+                Navigate(scrUseCaseDetail, ScreenTransition.Fade)
+
+        - lblRowBU As label:
+            Text: =ThisItem.ai_businessunit
+            X: =220
+            Y: =8
+            Width: =130
+            Height: =36
+            Size: =13
+            Color: =RGBA(75, 85, 99, 1)
+            VerticalAlign: =VerticalAlign.Middle
+
+        - lblRowDomain As label:
+            Text: =ThisItem.ai_domain
+            X: =358
+            Y: =8
+            Width: =100
+            Height: =36
+            Size: =13
+            Color: =RGBA(75, 85, 99, 1)
+            VerticalAlign: =VerticalAlign.Middle
+
+        - lblRowOwner As label:
+            Text: =ThisItem.ai_owner
+            X: =466
+            Y: =8
+            Width: =100
+            Height: =36
+            Size: =13
+            Color: =RGBA(75, 85, 99, 1)
+            VerticalAlign: =VerticalAlign.Middle
+
+        - lblScoreV As label:
+            Text: =If(IsBlank(ThisItem.ai_scorevalue), "—", Text(ThisItem.ai_scorevalue))
+            X: =574
+            Y: =11
+            Width: =40
+            Height: =30
+            Size: =12
+            FontWeight: =FontWeight.Bold
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: |-
+                =Switch(
+                    ThisItem.ai_scorevalue,
+                    5, RGBA(21, 128, 61, 1),
+                    4, RGBA(74, 222, 128, 1),
+                    3, RGBA(250, 204, 21, 1),
+                    2, RGBA(249, 115, 22, 1),
+                    1, RGBA(220, 38, 38, 1),
+                    RGBA(229, 231, 235, 1)
+                )
+            RadiusTopLeft: =6
+            RadiusTopRight: =6
+            RadiusBottomLeft: =6
+            RadiusBottomRight: =6
+
+        - lblScoreF As label:
+            Text: =If(IsBlank(ThisItem.ai_scorefeasibility), "—", Text(ThisItem.ai_scorefeasibility))
+            X: =620
+            Y: =11
+            Width: =40
+            Height: =30
+            Size: =12
+            FontWeight: =FontWeight.Bold
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: |-
+                =Switch(
+                    ThisItem.ai_scorefeasibility,
+                    5, RGBA(21, 128, 61, 1),
+                    4, RGBA(74, 222, 128, 1),
+                    3, RGBA(250, 204, 21, 1),
+                    2, RGBA(249, 115, 22, 1),
+                    1, RGBA(220, 38, 38, 1),
+                    RGBA(229, 231, 235, 1)
+                )
+            RadiusTopLeft: =6
+            RadiusTopRight: =6
+            RadiusBottomLeft: =6
+            RadiusBottomRight: =6
+
+        - lblScoreD As label:
+            Text: =If(IsBlank(ThisItem.ai_scoredata), "—", Text(ThisItem.ai_scoredata))
+            X: =666
+            Y: =11
+            Width: =40
+            Height: =30
+            Size: =12
+            FontWeight: =FontWeight.Bold
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: |-
+                =Switch(
+                    ThisItem.ai_scoredata,
+                    5, RGBA(21, 128, 61, 1),
+                    4, RGBA(74, 222, 128, 1),
+                    3, RGBA(250, 204, 21, 1),
+                    2, RGBA(249, 115, 22, 1),
+                    1, RGBA(220, 38, 38, 1),
+                    RGBA(229, 231, 235, 1)
+                )
+            RadiusTopLeft: =6
+            RadiusTopRight: =6
+            RadiusBottomLeft: =6
+            RadiusBottomRight: =6
+
+        - lblScoreS As label:
+            Text: =If(IsBlank(ThisItem.ai_scorespeed), "—", Text(ThisItem.ai_scorespeed))
+            X: =712
+            Y: =11
+            Width: =40
+            Height: =30
+            Size: =12
+            FontWeight: =FontWeight.Bold
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: |-
+                =Switch(
+                    ThisItem.ai_scorespeed,
+                    5, RGBA(21, 128, 61, 1),
+                    4, RGBA(74, 222, 128, 1),
+                    3, RGBA(250, 204, 21, 1),
+                    2, RGBA(249, 115, 22, 1),
+                    1, RGBA(220, 38, 38, 1),
+                    RGBA(229, 231, 235, 1)
+                )
+            RadiusTopLeft: =6
+            RadiusTopRight: =6
+            RadiusBottomLeft: =6
+            RadiusBottomRight: =6
+
+        - lblScoreR As label:
+            Text: =If(IsBlank(ThisItem.ai_scorerisk), "—", Text(ThisItem.ai_scorerisk))
+            X: =758
+            Y: =11
+            Width: =40
+            Height: =30
+            Size: =12
+            FontWeight: =FontWeight.Bold
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: |-
+                =Switch(
+                    ThisItem.ai_scorerisk,
+                    5, RGBA(220, 38, 38, 1),
+                    4, RGBA(249, 115, 22, 1),
+                    3, RGBA(250, 204, 21, 1),
+                    2, RGBA(74, 222, 128, 1),
+                    1, RGBA(21, 128, 61, 1),
+                    RGBA(229, 231, 235, 1)
+                )
+            RadiusTopLeft: =6
+            RadiusTopRight: =6
+            RadiusBottomLeft: =6
+            RadiusBottomRight: =6
+
+        - lblTotalScore As label:
+            Text: =If(IsBlank(ThisItem.ai_totalscore), "—", Text(ThisItem.ai_totalscore))
+            X: =808
+            Y: =8
+            Width: =60
+            Height: =36
+            Size: =14
+            FontWeight: =FontWeight.Bold
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            Color: =RGBA(17, 24, 39, 1)
+
+        - lblRecomBadge As label:
+            Text: =If(IsBlank(ThisItem.ai_recommendation), "—", ThisItem.ai_recommendation)
+            X: =874
+            Y: =13
+            Width: =120
+            Height: =26
+            Size: =11
+            FontWeight: =FontWeight.Bold
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: |-
+                =Switch(
+                    ThisItem.ai_recommendation,
+                    "QUICK_WIN", RGBA(21, 128, 61, 1),
+                    "STRATEGIC", RGBA(29, 78, 216, 1),
+                    "AVOID", RGBA(185, 28, 28, 1),
+                    RGBA(107, 114, 128, 1)
+                )
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+
+        - lblStatusBadge As label:
+            Text: =ThisItem.ai_status
+            X: =1002
+            Y: =13
+            Width: =100
+            Height: =26
+            Size: =11
+            FontWeight: =FontWeight.Bold
+            Align: =Align.Center
+            VerticalAlign: =VerticalAlign.Middle
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: |-
+                =Switch(
+                    ThisItem.ai_status,
+                    "DRAFT", RGBA(107, 114, 128, 1),
+                    "IN_REVIEW", RGBA(217, 119, 6, 1),
+                    "APPROVED", RGBA(21, 128, 61, 1),
+                    "REJECTED", RGBA(185, 28, 28, 1),
+                    RGBA(107, 114, 128, 1)
+                )
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
